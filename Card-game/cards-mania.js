@@ -10,23 +10,6 @@ let interval;
 let firstCard = false;
 let secondCard = false;
 
-//Items array with custom images 
-
-const items = [
-  { name: "custom1", image: "./Constitution/person-holding-flag.jpeg" }, // Replace with your image paths
-  { name: "custom2", image: ".\Constitution\freedom.png" },
-  { name: "custom3", image: ".\Constitution\freedom-of-speechh.jpeg" },
-  { name: "custom4", image: ".\Constitution\speech.png" },
-  { name: "custom5", image: ".\Constitution\judiciary.jpeg" },
-  { name: "custom6", image: ".\Constitution\CONSTI.png" },
-  { name: "custom7", image: ".\Constitution\secularism-box.jpeg" },
-  { name: "custom8", image: ".\Constitution\SECULARISM.png" },
-  { name: "custom9", image: ".\Constitution\Peace (2).png" },
-  { name: "custom10", image: ".\Constitution\peace.png"},
-  { name: "custom11", image: ".\Constitution\right2edu.jpeg" },
-  { name: "custom12", image: ".\Constitution\educ.png" },
-];
-
 //Initial Time
 let seconds = 0,
   minutes = 0;
@@ -54,84 +37,71 @@ const movesCounter = () => {
   moves.innerHTML = `<span>Moves:</span>${movesCount}`;
 };
 
-//Pick random objects from the items array
+// Get card elements from the HTML
+const cardTemplates = Array.from(document.querySelectorAll(".card-template"));
+
+// Store card values
+let cardValues = cardTemplates.map(card => ({
+  name: card.getAttribute("data-card-name"),
+  image: card.getAttribute("data-image")
+}));
+
+//Pick random objects from the game container
 const generateRandom = (size = 4) => {
-  //temporary array
-  let tempArray = [...items];
-  //initializes cardValues array
-  let cardValues = [];
-  //size should be double (4*4 matrix)/2 since pairs of objects would exist
-  size = (size * size) / 2;
-  //Random object selection
-  for (let i = 0; i < size; i++) {
-    const randomIndex = Math.floor(Math.random() * tempArray.length);
-    cardValues.push(tempArray[randomIndex]);
-    //once selected remove the object from temp array
-    tempArray.splice(randomIndex, 1);
+  let selectedValues = [];
+  let tempCardValues = [...cardValues];
+  for (let i = 0; i < size * size / 2; i++) {
+    const randomIndex = Math.floor(Math.random() * tempCardValues.length);
+    selectedValues.push(tempCardValues[randomIndex]);
+    tempCardValues.splice(randomIndex, 1);
   }
-  return cardValues;
+  return selectedValues;
 };
 
 const matrixGenerator = (cardValues, size = 4) => {
   gameContainer.innerHTML = "";
   cardValues = [...cardValues, ...cardValues];
-  //simple shuffle
+  // Simple shuffle
   cardValues.sort(() => Math.random() - 0.5);
+
   for (let i = 0; i < size * size; i++) {
-    /*
-        Create Cards
-        before => front side (contains question mark)
-        after => back side (contains actual image);
-        data-card-values is a custom attribute which stores the names of the cards to match later
-      */
     gameContainer.innerHTML += `
-     <div class="card-container" data-card-value="${cardValues[i].name}">
+      <div class="card-container" data-card-value="${cardValues[i].name}">
         <div class="card-before">?</div>
         <div class="card-after">
-        <img src="${cardValues[i].image}" class="image"/></div>
-     </div>
-     `;
+          <img src="${cardValues[i].image}" class="image"/>
+        </div>
+      </div>
+    `;
   }
+
   //Grid
-  gameContainer.style.gridTemplateColumns = `repeat(${size},auto)`;
+  gameContainer.style.gridTemplateColumns = `repeat(${size}, auto)`;
 
   //Cards
   cards = document.querySelectorAll(".card-container");
   cards.forEach((card) => {
     card.addEventListener("click", () => {
-      //If selected card is not matched yet then only run (i.e already matched card when clicked would be ignored)
       if (!card.classList.contains("matched")) {
-        //flip the clicked card
         card.classList.add("flipped");
-        //if it is the first card (!firstCard since firstCard is initially false)
         if (!firstCard) {
-          //so current card will become firstCard
           firstCard = card;
-          //current card's value becomes firstCardValue
           firstCardValue = card.getAttribute("data-card-value");
         } else {
-          //increment moves since user selected second card
           movesCounter();
-          //secondCard and value
           secondCard = card;
           let secondCardValue = card.getAttribute("data-card-value");
           if (firstCardValue === secondCardValue) {
-            //if both cards match add matched class so these cards would be ignored next time
             firstCard.classList.add("matched");
             secondCard.classList.add("matched");
-            //set firstCard to false since next card would be first now
             firstCard = false;
-            //winCount increment as user found a correct match
             winCount += 1;
-            //check if winCount ==half of cardValues
             if (winCount === Math.floor(cardValues.length / 2)) {
               result.innerHTML = `<h2>You Won</h2>
             <h4>Moves: ${movesCount}</h4>`;
               stopGame();
             }
           } else {
-            //if the cards don't match
-            //flip the cards back to normal
             let [tempFirst, tempSecond] = [firstCard, secondCard];
             firstCard = false;
             secondCard = false;
@@ -151,13 +121,10 @@ startButton.addEventListener("click", () => {
   movesCount = 0;
   seconds = 0;
   minutes = 0;
-  //controls and buttons visibility
   controls.classList.add("hide");
   stopButton.classList.remove("hide");
   startButton.classList.add("hide");
-  //Start timer
   interval = setInterval(timeGenerator, 1000);
-  //initial moves
   moves.innerHTML = `<span>Moves:</span> ${movesCount}`;
   initializer();
 });
@@ -178,6 +145,5 @@ const initializer = () => {
   result.innerText = "";
   winCount = 0;
   let cardValues = generateRandom();
-  console.log(cardValues);
   matrixGenerator(cardValues);
 };
